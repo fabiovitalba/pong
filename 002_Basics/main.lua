@@ -1,7 +1,8 @@
 function love.load()
-	--Setting Game Window
+	--Setting up Game Window
 	windowWidth = 1024
 	windowHeight = 480
+	speed = 3		--2 = slow, 3 = normal, 4 = fast
 	success = love.graphics.setMode(windowWidth, windowHeight, false, true, 4)	--( width, height, fullscreen, vsync, fsaa )
 	
 	--Setting Game Variables
@@ -19,22 +20,33 @@ function love.load()
 	fieldHeight = windowHeight - 100
 	grassIMG = love.graphics.newImage("g.jpg")
 	--Creating the Walls
-	objects.wall1 = {}
-	objects.wall1.body = love.physics.newBody(world, windowWidth/2, 25) --remember, the shape (the rectangle we create next) anchors to the body from its center, so we have to move it to (650/2, 650-50/2)
-	objects.wall1.shape = love.physics.newRectangleShape(windowWidth, 50) --make a rectangle with a width of the whole Window and a height of 50
-	objects.wall1.fixture = love.physics.newFixture(objects.wall1.body, objects.wall1.shape, 5000) --attach shape to body
+	objects.wall1 = {}	--Top wall
+	objects.wall1.body = love.physics.newBody(world, windowWidth/2, 25, "static") --The Bodyshape anchors to the middle, so be sure to take the middle Point as your reference, and not the left upper corner!
+	objects.wall1.shape = love.physics.newRectangleShape(windowWidth, 50) --Make the Shape of the Object a Rectangle with the Dimensions "windowWidth x 50"
+	objects.wall1.fixture = love.physics.newFixture(objects.wall1.body, objects.wall1.shape) --Attach the Shape to the Body
 	
-	objects.wall2 = {}
-	objects.wall2.body = love.physics.newBody(world, windowWidth/2, 25) --remember, the shape (the rectangle we create next) anchors to the body from its center, so we have to move it to (650/2, 650-50/2)
-	objects.wall2.shape = love.physics.newRectangleShape(windowWidth, 50) --make a rectangle with a width of the whole Window and a height of 50
-	objects.wall2.fixture = love.physics.newFixture(objects.wall2.body, objects.wall2.shape, 5000) --attach shape to body
+	objects.wall2 = {}	--Bottom wall
+	objects.wall2.body = love.physics.newBody(world, windowWidth/2, windowHeight-25, "static")
+	objects.wall2.shape = love.physics.newRectangleShape(windowWidth, 50)
+	objects.wall2.fixture = love.physics.newFixture(objects.wall2.body, objects.wall2.shape)
+	
+	objects.wall3 = {}	--Left wall
+	objects.wall3.body = love.physics.newBody(world, 25, windowHeight/2, "static")
+	objects.wall3.shape = love.physics.newRectangleShape(50, windowHeight)
+	objects.wall3.fixture = love.physics.newFixture(objects.wall3.body, objects.wall3.shape)
+	
+	objects.wall4 = {}	--Right wall
+	objects.wall4.body = love.physics.newBody(world, windowWidth-25, windowHeight/2, "static")
+	objects.wall4.shape = love.physics.newRectangleShape(50, windowHeight)
+	objects.wall4.fixture = love.physics.newFixture(objects.wall4.body, objects.wall4.shape)
 	
 	--Creating the Ball
 	objects.ball = {}
 	objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--place the body in the center of the world and make it dynamic, so it can move around
 	objects.ball.shape = love.physics.newCircleShape(10)	--the ball's shape has a radius of 10
-	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 10) -- Attach fixture to body and give it a density of 1.
+	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 0) -- Attach fixture to body and give it a density of 1.
 	objects.ball.fixture:setRestitution(0.9)	--let the ball bounce
+	objects.ball.body:setLinearDamping(0)
 	
 	--Setting Player Images
 	player1IMG = love.graphics.newImage("1.png")
@@ -46,20 +58,23 @@ function love.load()
 	p2y = windowHeight/2
 	--Creating the Players Physics
 	objects.p1 = {}
-	objects.p1.body = love.physics.newBody(world, p1x, p1y, "dynamic")
+	objects.p1.body = love.physics.newBody(world, p1x, p1y, "static")
 	objects.p1.shape = love.physics.newRectangleShape(0, 0, 24, 24)
 	objects.p1.image = player1IMG
-	objects.p1.fixture = love.physics.newFixture(objects.p1.body, objects.p1.shape, 5)	-- A higher density gives it more mass.
+	objects.p1.fixture = love.physics.newFixture(objects.p1.body, objects.p1.shape, 50)	-- A higher density gives it more mass.
 	
 	objects.p2 = {}
-	objects.p2.body = love.physics.newBody(world, p2x, p2y, "dynamic")
+	objects.p2.body = love.physics.newBody(world, p2x, p2y, "static")
 	objects.p2.shape = love.physics.newRectangleShape(0, 0, 24, 24)
 	objects.p2.image = player2IMG
-	objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape, 5)
+	objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape, 50)
 	
 	--Initializing Graphics stuff
-	local f = love.graphics.newFont(12)
-	love.graphics.setFont(f)
+	--Standartfont
+	stdF = love.graphics.newFont("tcb.ttf", 16)
+	love.graphics.setFont(stdF)
+	--Title font
+	ttlF = love.graphics.newFont("tcb.ttf", 28)
 	love.graphics.setColor(0,0,0,255)
 	love.graphics.setBackgroundColor(255,255,255)
 	love.graphics.setColor(0,0,0)
@@ -68,11 +83,18 @@ function love.load()
 end
 
 function love.draw()
-	--Draw the Field
+	--Draw the Fieldwalls
 	love.graphics.setColorMode("modulate")
 	love.graphics.setColor(72, 160, 14) -- set the drawing color to green for the wall1
-	love.graphics.polygon("fill", objects.wall1.body:getWorldPoints(objects.wall1.shape:getPoints())) -- draw a "filled in" polygon using the wall1's coordinates
-	love.graphics.setColor(0, 0, 0)
+	love.graphics.polygon("fill", objects.wall1.body:getWorldPoints(objects.wall1.shape:getPoints())) --Draw the top wall
+	love.graphics.polygon("fill", objects.wall2.body:getWorldPoints(objects.wall2.shape:getPoints())) --Draw the bottom wall
+	love.graphics.polygon("fill", objects.wall3.body:getWorldPoints(objects.wall3.shape:getPoints())) --Draw the left wall
+	love.graphics.polygon("fill", objects.wall4.body:getWorldPoints(objects.wall4.shape:getPoints())) --Draw the right wall
+	
+	--Draw the Fieldlines
+	love.graphics.setColor(72, 160, 14)
+	love.graphics.rectangle("fill", startX, startY, fieldWidth, fieldHeight)	--Field
+	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle("line", startX, startY, fieldWidth, fieldHeight)	--Outline
 	love.graphics.line(startX+(fieldWidth/2), startY, startX+(fieldWidth/2), startY+fieldHeight)	--Middle Line
 	
@@ -82,67 +104,66 @@ function love.draw()
 	
 	--Set the Players up
 	love.graphics.setColorMode("replace")
-	--love.graphics.polygon("fill", objects.p1.body:getWorldPoints(objects.p1.shape:getPoints()))
 	love.graphics.draw(objects.p1.image, objects.p1.body:getX(), objects.p1.body:getY(), objects.p1.body:getAngle(),  1, 1, objects.p1.image:getWidth()/2, objects.p1.image:getHeight()/2)
-	--love.graphics.polygon("fill", objects.p2.body:getWorldPoints(objects.p2.shape:getPoints()))
 	love.graphics.draw(objects.p2.image, objects.p2.body:getX(), objects.p2.body:getY(), objects.p2.body:getAngle(),  1, 1, objects.p2.image:getWidth()/2, objects.p2.image:getHeight()/2)
-	
-	--Update the Players positions
-	--love.graphics.setColorMode("replace")
-	--love.graphics.draw(player1IMG, objects.p1.body:getWorldPoints(objects.p1.shape:getPoints()))
-	--love.graphics.draw(player2IMG, objects.p2.body:getWorldPoints(objects.p2.shape:getPoints()))
 	
 	--Draw the Instructions
 	love.graphics.setColorMode("modulate")
-	love.graphics.setColor(0,0,0, 255)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.setFont(stdF)
 	love.graphics.print("Player 1 uses W and S Keys and Player 2 uses Up and Down Arrow Keys. Start with Space.", 10, 10)
-	love.graphics.print("P1", startX+fieldWidth/4, startY+windowWidth/2)
-	love.graphics.print("P2", startX+3*(fieldWidth/4), startY+windowWidth/2)
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.setFont(ttlF)
+	love.graphics.print("P1", (startX + fieldWidth/4), (startY + windowWidth/2))
+	love.graphics.print("P2", (startX + 3*(fieldWidth/4)), (startY + windowWidth/2))
 	
 	--Check if Game Over
 end
 
 function love.update(dt)
-	world:update(dt) --this puts the world into motion
+	world:update(dt) --Update World Physics
 	
-	--Ball Control
-	if love.keyboard.isDown("right") then --press the right arrow key to push the ball to the right
-		objects.ball.body:applyForce(400, 0)
-	elseif love.keyboard.isDown("left") then --press the left arrow key to push the ball to the left
-		objects.ball.body:applyForce(-400, 0)
-	elseif love.keyboard.isDown("up") then --press the up arrow key to push the ball in the air
-		objects.ball.body:applyForce(0, -400)
-	elseif love.keyboard.isDown("down") then --press the down arrow key to push the ball down
-		objects.ball.body:applyForce(0, 400)
-	elseif love.keyboard.isDown(" ") then --press the up arrow key to set the ball in the air
-		objects.ball.body:setPosition(fieldWidth/2, fieldHeight/2)
-	end
-	
-	--Player Controls
 	--Player 1 Commands
-	if love.keyboard.isDown("w") and ((p1y - 1) >= startY) then
+	if love.keyboard.isDown("w") then
 		--Player 1 goes up
-			p1y = p1y - 1
-	elseif love.keyboard.isDown("s") and ((p1y+1) <= (startY+(fieldHeight-24))) then
+		--objects.p1.body:applyForce(0, -600)				--For Players who want real Physics
+		objects.p1.body:setY(objects.p1.body:getY() - speed)
+	elseif love.keyboard.isDown("s") then
 		--Player 1 goes down
-		p1y = p1y + 1
+		--objects.p1.body:applyForce(0, 600)				--For Players who want real Physics
+		objects.p1.body:setY(objects.p1.body:getY() + speed)
 	end
+	
 	--Player 2 Commands
-	--if love.keyboard.isDown("up") and ((p2y - 1) >= startY)  then
+	if love.keyboard.isDown("up") then
 		--Player 2 goes up
-		--p2y = p2y - 1
-	--elseif love.keyboard.isDown("down") and ((p2y+1) <= (startY+(fieldHeight-24))) then
+		--objects.p2.body:applyForce(0, -600)				--For Players who want real Physics
+		objects.p2.body:setY(objects.p2.body:getY() - speed)
+	elseif love.keyboard.isDown("down") then
 		--Player 2 goes down
-		--p2y = p2y + 1
-	--end
+		--objects.p2.body:applyForce(0, 600)				--For Players who want real Physics
+		objects.p2.body:setY(objects.p2.body:getY() + speed)
+	end
 end
 
 function love.keypressed(key)
 	if key == ' ' then
 		--Gamestate = Started
 		gamestate = "running"
+		objects.ball.body:setPosition(fieldWidth/2 + startX, fieldHeight/2 + startY)
+		if math.random(100) % 2 == 1 then
+			objects.ball.body:applyForce(100000, 0)
+		else
+			objects.ball.body:applyForce(-100000, 0)
+		end
 	elseif key == 'p' then
 		--Gamestate = Paused
-		gamestate = "paused"
+		if gamestate == "paused" then
+			objects.ball.body:setAwake(true)
+			gamestate = "running"
+		else
+			objects.ball.body:setAwake(false)
+			gamestate = "paused"
+		end
 	end
 end
