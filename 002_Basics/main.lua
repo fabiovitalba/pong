@@ -11,7 +11,7 @@ function love.load()
 	--Initializing Physics
 	love.physics.setMeter(64)	--the height of a meter our worlds will be 64px
 	world = love.physics.newWorld(0, 0, true)	--create a world for the bodies to exist in with horizontal gravity of 0 and vertical gravity of 9.81 (= 9.81*64)
-	objects = {} -- table to hold all our physical objects
+	objects = {} --Array holding all the Objects with Physic elements
 	
 	--Creating the Game Field Variables
 	startX = 50
@@ -42,11 +42,11 @@ function love.load()
 	
 	--Creating the Ball
 	objects.ball = {}
-	objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--place the body in the center of the world and make it dynamic, so it can move around
-	objects.ball.shape = love.physics.newCircleShape(10)	--the ball's shape has a radius of 10
-	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 0) -- Attach fixture to body and give it a density of 1.
-	objects.ball.fixture:setRestitution(0.9)	--let the ball bounce
-	objects.ball.body:setLinearDamping(0)
+	objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--Creates a Physical Body in the World. The Type is Dynamic, meaning it can be moved by other Objects.
+	objects.ball.shape = love.physics.newCircleShape(10)	--The Shape of this Object is a Ball with the Radius of 10px.
+	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 0) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
+	objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
+	objects.ball.shape:setFriction(0)
 	
 	--Setting Player Images
 	player1IMG = love.graphics.newImage("1.png")
@@ -61,13 +61,13 @@ function love.load()
 	objects.p1.body = love.physics.newBody(world, p1x, p1y, "static")
 	objects.p1.shape = love.physics.newRectangleShape(0, 0, 24, 24)
 	objects.p1.image = player1IMG
-	objects.p1.fixture = love.physics.newFixture(objects.p1.body, objects.p1.shape, 50)	-- A higher density gives it more mass.
+	objects.p1.fixture = love.physics.newFixture(objects.p1.body, objects.p1.shape)
 	
 	objects.p2 = {}
 	objects.p2.body = love.physics.newBody(world, p2x, p2y, "static")
 	objects.p2.shape = love.physics.newRectangleShape(0, 0, 24, 24)
 	objects.p2.image = player2IMG
-	objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape, 50)
+	objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape)
 	
 	--Initializing Graphics stuff
 	--Standartfont
@@ -75,6 +75,7 @@ function love.load()
 	love.graphics.setFont(stdF)
 	--Title font
 	ttlF = love.graphics.newFont("tcb.ttf", 28)
+	
 	love.graphics.setColor(0,0,0,255)
 	love.graphics.setBackgroundColor(255,255,255)
 	love.graphics.setColor(0,0,0)
@@ -85,7 +86,7 @@ end
 function love.draw()
 	--Draw the Fieldwalls
 	love.graphics.setColorMode("modulate")
-	love.graphics.setColor(72, 160, 14) -- set the drawing color to green for the wall1
+	love.graphics.setColor(72, 160, 14)	--Set the Color to Green for all the Walls
 	love.graphics.polygon("fill", objects.wall1.body:getWorldPoints(objects.wall1.shape:getPoints())) --Draw the top wall
 	love.graphics.polygon("fill", objects.wall2.body:getWorldPoints(objects.wall2.shape:getPoints())) --Draw the bottom wall
 	love.graphics.polygon("fill", objects.wall3.body:getWorldPoints(objects.wall3.shape:getPoints())) --Draw the left wall
@@ -93,13 +94,15 @@ function love.draw()
 	
 	--Draw the Fieldlines
 	love.graphics.setColor(72, 160, 14)
-	love.graphics.rectangle("fill", startX, startY, fieldWidth, fieldHeight)	--Field
+	love.graphics.rectangle("fill", startX, startY, fieldWidth, fieldHeight)	--Inner Game Field
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.rectangle("line", startX, startY, fieldWidth, fieldHeight)	--Outline
 	love.graphics.line(startX+(fieldWidth/2), startY, startX+(fieldWidth/2), startY+fieldHeight)	--Middle Line
 	
 	--Draw the Ball
-	love.graphics.setColor(193, 47, 14) --set the drawing color to red for the ball
+	love.graphics.setColor(0, 0, 0)	--Set the 2 px Outline Color to Black for the Ball
+	love.graphics.circle("fill", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius() + 2)
+	love.graphics.setColor(255, 255, 255)	--Set the Drawing Color to White for the Ball
 	love.graphics.circle("fill", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius())
 	
 	--Set the Players up
@@ -114,33 +117,36 @@ function love.draw()
 	love.graphics.print("Player 1 uses W and S Keys and Player 2 uses Up and Down Arrow Keys. Start with Space.", 10, 10)
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.setFont(ttlF)
-	love.graphics.print("P1", (startX + fieldWidth/4), (startY + windowWidth/2))
-	love.graphics.print("P2", (startX + 3*(fieldWidth/4)), (startY + windowWidth/2))
+	love.graphics.printf("P1", windowWidth/4, windowHeight/2 - 12, 200, "left")
+	love.graphics.printf("P2", 3 * (windowWidth/4) - 50, windowHeight/2 - 12, 200, "left")
+	if gamestate == "paused" then	--If the Game was Paused display the Message
+		--Actual Text
+		love.graphics.setColor(0, 0, 0, 255)
+		love.graphics.setFont(ttlF)
+		love.graphics.printf("PAUSED", windowWidth/2 - 50, windowHeight/2 - 12, 200, "left")
+	end
 	
 	--Check if Game Over
+	--See http://www.love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks for Collision resolving
 end
 
 function love.update(dt)
 	world:update(dt) --Update World Physics
 	
 	--Player 1 Commands
-	if love.keyboard.isDown("w") then
-		--Player 1 goes up
+	if love.keyboard.isDown("w") and ((objects.p1.body:getY() - speed) >= startY) then	--Player 1 goes up
 		--objects.p1.body:applyForce(0, -600)				--For Players who want real Physics
 		objects.p1.body:setY(objects.p1.body:getY() - speed)
-	elseif love.keyboard.isDown("s") then
-		--Player 1 goes down
+	elseif love.keyboard.isDown("s") and ((objects.p1.body:getY() + speed) <= (startY + fieldHeight)) then	--Player 1 goes down
 		--objects.p1.body:applyForce(0, 600)				--For Players who want real Physics
 		objects.p1.body:setY(objects.p1.body:getY() + speed)
 	end
 	
 	--Player 2 Commands
-	if love.keyboard.isDown("up") then
-		--Player 2 goes up
+	if love.keyboard.isDown("up") and ((objects.p2.body:getY() - speed) >= startY) then	--Player 2 goes up
 		--objects.p2.body:applyForce(0, -600)				--For Players who want real Physics
 		objects.p2.body:setY(objects.p2.body:getY() - speed)
-	elseif love.keyboard.isDown("down") then
-		--Player 2 goes down
+	elseif love.keyboard.isDown("down") and ((objects.p2.body:getY() + speed) <= (startY + fieldHeight)) then	--Player 2 goes down
 		--objects.p2.body:applyForce(0, 600)				--For Players who want real Physics
 		objects.p2.body:setY(objects.p2.body:getY() + speed)
 	end
@@ -152,9 +158,9 @@ function love.keypressed(key)
 		gamestate = "running"
 		objects.ball.body:setPosition(fieldWidth/2 + startX, fieldHeight/2 + startY)
 		if math.random(100) % 2 == 1 then
-			objects.ball.body:applyForce(100000, 0)
+			objects.ball.body:applyForce(1000, 0)
 		else
-			objects.ball.body:applyForce(-100000, 0)
+			objects.ball.body:applyForce(-1000, 0)
 		end
 	elseif key == 'p' then
 		--Gamestate = Paused
