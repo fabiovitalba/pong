@@ -2,7 +2,7 @@ function love.load()
 	--Setting up Game Window
 	windowWidth = 1024
 	windowHeight = 480
-	speed = 3		--2 = slow, 3 = normal, 4 = fast
+	speed = 2		--2 = slow, 3 = normal, 4 = fast
 	success = love.graphics.setMode(windowWidth, windowHeight, false, true, 4)	--( width, height, fullscreen, vsync, fsaa )
 	
 	--Setting Game Variables
@@ -44,9 +44,8 @@ function love.load()
 	objects.ball = {}
 	objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--Creates a Physical Body in the World. The Type is Dynamic, meaning it can be moved by other Objects.
 	objects.ball.shape = love.physics.newCircleShape(10)	--The Shape of this Object is a Ball with the Radius of 10px.
-	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 0) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
+	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
 	objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
-	objects.ball.shape:setFriction(0)
 	
 	--Setting Player Images
 	player1IMG = love.graphics.newImage("1.png")
