@@ -21,31 +21,36 @@ function love.load()
 	grassIMG = love.graphics.newImage("g.jpg")
 	--Creating the Walls
 	objects.wall1 = {}	--Top wall
-	objects.wall1.body = love.physics.newBody(world, windowWidth/2, 25, "static") --The Bodyshape anchors to the middle, so be sure to take the middle Point as your reference, and not the left upper corner!
-	objects.wall1.shape = love.physics.newRectangleShape(windowWidth, 50) --Make the Shape of the Object a Rectangle with the Dimensions "windowWidth x 50"
-	objects.wall1.fixture = love.physics.newFixture(objects.wall1.body, objects.wall1.shape) --Attach the Shape to the Body
+		objects.wall1.body = love.physics.newBody(world, windowWidth/2, 25, "static") --The Bodyshape anchors to the middle, so be sure to take the middle Point as your reference, and not the left upper corner!
+		objects.wall1.shape = love.physics.newRectangleShape(windowWidth, 50) --Make the Shape of the Object a Rectangle with the Dimensions "windowWidth x 50"
+		objects.wall1.fixture = love.physics.newFixture(objects.wall1.body, objects.wall1.shape) --Attach the Shape to the Body
+		objects.wall1.fixture:setUserData("TopWall") 
 	
 	objects.wall2 = {}	--Bottom wall
-	objects.wall2.body = love.physics.newBody(world, windowWidth/2, windowHeight-25, "static")
-	objects.wall2.shape = love.physics.newRectangleShape(windowWidth, 50)
-	objects.wall2.fixture = love.physics.newFixture(objects.wall2.body, objects.wall2.shape)
+		objects.wall2.body = love.physics.newBody(world, windowWidth/2, windowHeight-25, "static")
+		objects.wall2.shape = love.physics.newRectangleShape(windowWidth, 50)
+		objects.wall2.fixture = love.physics.newFixture(objects.wall2.body, objects.wall2.shape)
+		objects.wall2.fixture:setUserData("BottomWall") 
 	
 	objects.wall3 = {}	--Left wall
-	objects.wall3.body = love.physics.newBody(world, 25, windowHeight/2, "static")
-	objects.wall3.shape = love.physics.newRectangleShape(50, windowHeight)
-	objects.wall3.fixture = love.physics.newFixture(objects.wall3.body, objects.wall3.shape)
+		objects.wall3.body = love.physics.newBody(world, 25, windowHeight/2, "static")
+		objects.wall3.shape = love.physics.newRectangleShape(50, windowHeight)
+		objects.wall3.fixture = love.physics.newFixture(objects.wall3.body, objects.wall3.shape)
+		objects.wall3.fixture:setUserData("LeftWall") 
 	
 	objects.wall4 = {}	--Right wall
-	objects.wall4.body = love.physics.newBody(world, windowWidth-25, windowHeight/2, "static")
-	objects.wall4.shape = love.physics.newRectangleShape(50, windowHeight)
-	objects.wall4.fixture = love.physics.newFixture(objects.wall4.body, objects.wall4.shape)
+		objects.wall4.body = love.physics.newBody(world, windowWidth-25, windowHeight/2, "static")
+		objects.wall4.shape = love.physics.newRectangleShape(50, windowHeight)
+		objects.wall4.fixture = love.physics.newFixture(objects.wall4.body, objects.wall4.shape)
+		objects.wall4.fixture:setUserData("RightWall") 
 	
 	--Creating the Ball
 	objects.ball = {}
-	objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--Creates a Physical Body in the World. The Type is Dynamic, meaning it can be moved by other Objects.
-	objects.ball.shape = love.physics.newCircleShape(10)	--The Shape of this Object is a Ball with the Radius of 10px.
-	objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
-	objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
+		objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--Creates a Physical Body in the World. The Type is Dynamic, meaning it can be moved by other Objects.
+		objects.ball.shape = love.physics.newCircleShape(10)	--The Shape of this Object is a Ball with the Radius of 10px.
+		objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
+		objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
+		objects.ball.fixture:setUserData("Ball") 
 	
 	--Setting Player Images
 	player1IMG = love.graphics.newImage("1.png")
@@ -57,16 +62,18 @@ function love.load()
 	p2y = windowHeight/2
 	--Creating the Players Physics
 	objects.p1 = {}
-	objects.p1.body = love.physics.newBody(world, p1x, p1y, "static")
-	objects.p1.shape = love.physics.newRectangleShape(0, 0, 24, 24)
-	objects.p1.image = player1IMG
-	objects.p1.fixture = love.physics.newFixture(objects.p1.body, objects.p1.shape)
+		objects.p1.body = love.physics.newBody(world, p1x, p1y, "static")
+		objects.p1.shape = love.physics.newRectangleShape(0, 0, 24, 24)
+		objects.p1.image = player1IMG
+		objects.p1.fixture = love.physics.newFixture(objects.p1.body, objects.p1.shape)
+		objects.p1.fixture:setUserData("Player1") 
 	
 	objects.p2 = {}
 	objects.p2.body = love.physics.newBody(world, p2x, p2y, "static")
 	objects.p2.shape = love.physics.newRectangleShape(0, 0, 24, 24)
 	objects.p2.image = player2IMG
 	objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape)
+	objects.p2.fixture:setUserData("Player2") 
 	
 	--Initializing Graphics stuff
 	--Standartfont
@@ -171,4 +178,10 @@ function love.keypressed(key)
 			gamestate = "paused"
 		end
 	end
+end
+
+function ballHitWall()
+	
+	
+	
 end
