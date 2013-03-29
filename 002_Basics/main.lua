@@ -18,8 +18,8 @@ function love.load()
 	p2tmpColl = 0	--Player 2 Collision count
 	
 	--Initializing Physics
-	love.physics.setMeter(64)	--the height of a meter our worlds will be 64px
-	world = love.physics.newWorld(0, 0, true)	--create a world for the bodies to exist in with horizontal gravity of 0 and vertical gravity of 9.81 (= 9.81*64)
+	love.physics.setMeter(64)	--The height of a Meter in this world will be 64px
+	world = love.physics.newWorld(0, 0, true)	--Create a World for the Bodies to exist in, with horizontal Gravity of 0 and vertical gravity of 0. Real Gravity is 9.81 (= 9.81*64)
 		world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 	objects = {} --Array holding all the Objects with Physic elements
 	
@@ -132,6 +132,7 @@ function love.draw()
 		elseif playerTurn == 2 then
 			love.graphics.print("Player 2 has "..p2tmpColl.." temporary Collissions. Only "..(maxColl - p2tmpColl).." left.", 10, startY+fieldHeight+25)
 		end
+		love.graphics.print("Current Velocity: "..objects.ball.body:getLinearVelocity( ), startX+fieldWidth - 175, startY+fieldHeight+25)
 	end
 	
 	love.graphics.setColor(255, 255, 255, 255)
@@ -171,6 +172,12 @@ end
 
 function love.update(dt)
 	world:update(dt) --Update World Physics
+	--x, y = objects.ball.body:getLinearVelocity( )
+	--if abs(objects.ball.body:getLinearVelocity( )) < 520 then
+		--objects.ball.body:applyForce(x, y)
+	--elseif abs(objects.ball.body:getLinearVelocity( )) > 520 then
+		--objects.ball.body:applyForce(-100, -100)
+	--end
 	
 	--Player 1 Commands
 	if love.keyboard.isDown("w") and ((objects.p1.body:getY() - speed) >= startY) then	--Player 1 goes up
@@ -210,10 +217,10 @@ function love.keypressed(key)
 		gamemsg = ""
 		resetPositions()
 		if math.random(100) % 2 == 1 then
-			objects.ball.body:applyForce(1000, 0)
+			objects.ball.body:applyForce(10000, 0)
 			playerTurn = 2
 		else
-			objects.ball.body:applyForce(-1000, 0)
+			objects.ball.body:applyForce(-10000, 0)
 			playerTurn = 1
 		end
 	elseif key == 'p' then
@@ -230,10 +237,10 @@ function love.keypressed(key)
 end
 
 function getFieldPosition(obj)	--Check in which field the Ball is in this Moment
-	if obj.body:getX() < (startX + fieldWidth/2) then
-		return 1
+	if obj.body:getX() < (startX + fieldWidth/2) then	--If the Body is in the left side of the Screen/Gamefield
+		return 1	--The Object is in Player 1's Field
 	else
-		return 2
+		return 2	--The Object is in Player 2's Field
 	end
 end
 
