@@ -11,6 +11,7 @@ function love.load()
 	--Initializing Physics
 	love.physics.setMeter(64)	--the height of a meter our worlds will be 64px
 	world = love.physics.newWorld(0, 0, true)	--create a world for the bodies to exist in with horizontal gravity of 0 and vertical gravity of 9.81 (= 9.81*64)
+		world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 	objects = {} --Array holding all the Objects with Physic elements
 	
 	--Creating the Game Field Variables
@@ -47,6 +48,7 @@ function love.load()
 	--Creating the Ball
 	objects.ball = {}
 		objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--Creates a Physical Body in the World. The Type is Dynamic, meaning it can be moved by other Objects.
+		--objects.ball.body:setMass(0)
 		objects.ball.shape = love.physics.newCircleShape(10)	--The Shape of this Object is a Ball with the Radius of 10px.
 		objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
 		objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
@@ -69,11 +71,11 @@ function love.load()
 		objects.p1.fixture:setUserData("Player1") 
 	
 	objects.p2 = {}
-	objects.p2.body = love.physics.newBody(world, p2x, p2y, "static")
-	objects.p2.shape = love.physics.newRectangleShape(0, 0, 24, 24)
-	objects.p2.image = player2IMG
-	objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape)
-	objects.p2.fixture:setUserData("Player2") 
+		objects.p2.body = love.physics.newBody(world, p2x, p2y, "static")
+		objects.p2.shape = love.physics.newRectangleShape(0, 0, 24, 24)
+		objects.p2.image = player2IMG
+		objects.p2.fixture = love.physics.newFixture(objects.p2.body, objects.p2.shape)
+		objects.p2.fixture:setUserData("Player2") 
 	
 	--Initializing Graphics stuff
 	--Standartfont
@@ -163,6 +165,8 @@ function love.keypressed(key)
 		--Gamestate = Started
 		gamestate = "running"
 		objects.ball.body:setPosition(fieldWidth/2 + startX, fieldHeight/2 + startY)
+		objects.ball.body:setAwake(false)
+		objects.ball.body:setAwake(true)
 		if math.random(100) % 2 == 1 then
 			objects.ball.body:applyForce(1000, 0)
 		else
@@ -180,8 +184,22 @@ function love.keypressed(key)
 	end
 end
 
-function ballHitWall()
+--Collision Callbacks
+--a is the first fixture object in the collision.
+--b is the second fixture object in the collision.
+--coll is the contact object created.  
+function beginContact(a, b, coll)
 	
+end
+
+function endContact(a, b, coll)
 	
+end
+
+function preSolve(a, b, coll)
+	
+end
+
+function postSolve(a, b, coll)
 	
 end
