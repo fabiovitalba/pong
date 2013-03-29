@@ -189,6 +189,18 @@ function love.update(dt)
 		--objects.p2.body:applyForce(0, 600)				--For Players who want real Physics
 		objects.p2.body:setY(objects.p2.body:getY() + speed)
 	end
+	
+	--You could call Body:getLinearVelocity() and only apply force if the horizontal velocity is smaller than a certain number.
+	--x, y = Body:getLinearVelocity( )
+	--vx, vy = Body:getLinearVelocityFromLocalPoint( x, y )
+	--number x
+		--The x position to measure velocity.
+	--number y
+		--The y position to measure velocity.
+	--number vx
+		--The x component of velocity at point (x,y). 
+	--number vy
+		--The y component of velocity at point (x,y). 
 end
 
 function love.keypressed(key)
