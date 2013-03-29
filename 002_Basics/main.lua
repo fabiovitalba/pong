@@ -2,8 +2,8 @@ function love.load()
 	--Setting up Game Window
 	windowWidth = 1024
 	windowHeight = 480
-	speed = 2		--2 = slow, 3 = normal, 4 = fast
-	maxColl = 4
+	speed = 1		--2 = slow, 3 = normal, 4 = fast
+	maxColl = 5
 	vol = 1.0
 	debugging = true
 	success = love.graphics.setMode(windowWidth, windowHeight, false, true, 4)	--( width, height, fullscreen, vsync, fsaa )
@@ -65,7 +65,7 @@ function love.load()
 		--objects.ball.body:setMass(0)
 		objects.ball.shape = love.physics.newCircleShape(10)	--The Shape of this Object is a Ball with the Radius of 10px.
 		objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
-		objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
+		objects.ball.fixture:setRestitution(1)	--Determines the Bouciness of the Ball.
 		objects.ball.fixture:setUserData("Ball") 
 	
 	--Setting Standard Player Images
@@ -172,6 +172,9 @@ end
 
 function love.update(dt)
 	world:update(dt) --Update World Physics
+	if bgSound:isStopped() then
+		bgSound:rewind()
+	end
 	--x, y = objects.ball.body:getLinearVelocity( )
 	--if abs(objects.ball.body:getLinearVelocity( )) < 520 then
 		--objects.ball.body:applyForce(x, y)
