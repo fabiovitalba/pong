@@ -3,16 +3,30 @@ function love.load()
 	windowWidth = 1024
 	windowHeight = 480
 	speed = 2		--2 = slow, 3 = normal, 4 = fast
+	maxColl = 4
+	vol = 1.0
+	debugging = true
 	success = love.graphics.setMode(windowWidth, windowHeight, false, true, 4)	--( width, height, fullscreen, vsync, fsaa )
-	
+   
 	--Setting Game Variables
 	gamestate = "paused"
+	gamemsg = ""
+	playerTurn = 1
+	p1score = 0	--Player 1 Score
+	p2score = 0	--Player 2 Score
+	p1tmpColl = 0	--Player 1 Collision count
+	p2tmpColl = 0	--Player 2 Collision count
 	
 	--Initializing Physics
 	love.physics.setMeter(64)	--the height of a meter our worlds will be 64px
 	world = love.physics.newWorld(0, 0, true)	--create a world for the bodies to exist in with horizontal gravity of 0 and vertical gravity of 9.81 (= 9.81*64)
 		world:setCallbacks(beginContact, endContact, preSolve, postSolve)
 	objects = {} --Array holding all the Objects with Physic elements
+	
+	--Starting the Sound System
+	bgSound = love.audio.newSource("tetris_remix.mp3", "stream")	--Source: https://www.youtube.com/watch?v=eHUkHGoBHVY
+	love.audio.play(bgSound)
+	love.audio.setVolume(vol)
 	
 	--Creating the Game Field Variables
 	startX = 50
@@ -54,9 +68,9 @@ function love.load()
 		objects.ball.fixture:setRestitution(0.9)	--Determines the Bouciness of the Ball.
 		objects.ball.fixture:setUserData("Ball") 
 	
-	--Setting Player Images
-	player1IMG = love.graphics.newImage("1.png")
-	player2IMG = love.graphics.newImage("2.png")
+	--Setting Standard Player Images
+	player1IMG = love.graphics.newImage("1.png")	--Note: These are not mine. I do now own this image.
+	player2IMG = love.graphics.newImage("2.png")	--Note: These are not mine. I do now own this image.
 	--Setting up Players Positions
 	p1x = 50
 	p1y = windowHeight/2
@@ -83,12 +97,9 @@ function love.load()
 	love.graphics.setFont(stdF)
 	--Title font
 	ttlF = love.graphics.newFont("tcb.ttf", 28)
-	
-	love.graphics.setColor(0,0,0,255)
 	love.graphics.setBackgroundColor(255,255,255)
 	love.graphics.setColor(0,0,0)
 	love.graphics.setColorMode("replace")
-	
 end
 
 function love.draw()
@@ -107,6 +118,27 @@ function love.draw()
 	love.graphics.rectangle("line", startX, startY, fieldWidth, fieldHeight)	--Outline
 	love.graphics.line(startX+(fieldWidth/2), startY, startX+(fieldWidth/2), startY+fieldHeight)	--Middle Line
 	
+	--Draw the Instructions
+	love.graphics.setColorMode("modulate")
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.setFont(stdF)
+	love.graphics.print("Player 1 uses W and S Keys and Player 2 uses Up and Down Arrow Keys. Start with Space.\nYou can Pause the Game with the P Key. For further Information press F1.", 10, 10)
+	love.graphics.print(p1score.." : "..p2score, startX+fieldWidth - 75, startY+fieldHeight+10)
+	if debugging then	--Debugging Infos
+		love.graphics.print("The Ball is in Player "..getFieldPosition(objects.ball).."'s Field", 10, 50)
+		love.graphics.print("It's Player "..getPlayerTurn().."'s Turn.", 10, startY+fieldHeight+10)
+		if playerTurn == 1 then
+			love.graphics.print("Player 1 has "..p1tmpColl.." temporary Collissions. Only "..(maxColl - p1tmpColl).." left.", 10, startY+fieldHeight+25)
+		elseif playerTurn == 2 then
+			love.graphics.print("Player 2 has "..p2tmpColl.." temporary Collissions. Only "..(maxColl - p2tmpColl).." left.", 10, startY+fieldHeight+25)
+		end
+	end
+	
+	love.graphics.setColor(255, 255, 255, 255)
+	love.graphics.setFont(ttlF)
+	love.graphics.printf("P1", windowWidth/4-100, windowHeight/2 - 12, 200, "center")
+	love.graphics.printf("P2", 3 * (windowWidth/4) - 100, windowHeight/2 - 12, 200, "center")
+	
 	--Draw the Ball
 	love.graphics.setColor(0, 0, 0)	--Set the 2 px Outline Color to Black for the Ball
 	love.graphics.circle("fill", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius() + 2)
@@ -118,24 +150,23 @@ function love.draw()
 	love.graphics.draw(objects.p1.image, objects.p1.body:getX(), objects.p1.body:getY(), objects.p1.body:getAngle(),  1, 1, objects.p1.image:getWidth()/2, objects.p1.image:getHeight()/2)
 	love.graphics.draw(objects.p2.image, objects.p2.body:getX(), objects.p2.body:getY(), objects.p2.body:getAngle(),  1, 1, objects.p2.image:getWidth()/2, objects.p2.image:getHeight()/2)
 	
-	--Draw the Instructions
-	love.graphics.setColorMode("modulate")
-	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.setFont(stdF)
-	love.graphics.print("Player 1 uses W and S Keys and Player 2 uses Up and Down Arrow Keys. Start with Space.", 10, 10)
-	love.graphics.setColor(255, 255, 255, 255)
-	love.graphics.setFont(ttlF)
-	love.graphics.printf("P1", windowWidth/4, windowHeight/2 - 12, 200, "left")
-	love.graphics.printf("P2", 3 * (windowWidth/4) - 50, windowHeight/2 - 12, 200, "left")
 	if gamestate == "paused" then	--If the Game was Paused display the Message
 		--Actual Text
 		love.graphics.setColor(0, 0, 0, 255)
 		love.graphics.setFont(ttlF)
-		love.graphics.printf("PAUSED", windowWidth/2 - 50, windowHeight/2 - 12, 200, "left")
+		love.graphics.printf("PAUSED", windowWidth/2 - 100, windowHeight/2 - 12, 200, "center")
 	end
 	
 	--Check if Game Over
 	--See http://www.love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks for Collision resolving
+	if not(gamemsg == "") then
+		love.graphics.setColor(168, 168, 168,128)
+		love.graphics.rectangle("fill", windowWidth/2-200, windowHeight/2-100, 400, 200)
+		love.graphics.setColor(200, 200, 200, 200)
+		love.graphics.rectangle("line", windowWidth/2-200, windowHeight/2-100, 400, 200)
+		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.printf(gamemsg, windowWidth/2-200, windowHeight/2-35, 400, "center")
+	end
 end
 
 function love.update(dt)
@@ -164,13 +195,14 @@ function love.keypressed(key)
 	if key == ' ' then
 		--Gamestate = Started
 		gamestate = "running"
-		objects.ball.body:setPosition(fieldWidth/2 + startX, fieldHeight/2 + startY)
-		objects.ball.body:setAwake(false)
-		objects.ball.body:setAwake(true)
+		gamemsg = ""
+		resetPositions()
 		if math.random(100) % 2 == 1 then
 			objects.ball.body:applyForce(1000, 0)
+			playerTurn = 2
 		else
 			objects.ball.body:applyForce(-1000, 0)
+			playerTurn = 1
 		end
 	elseif key == 'p' then
 		--Gamestate = Paused
@@ -179,9 +211,33 @@ function love.keypressed(key)
 			gamestate = "running"
 		else
 			objects.ball.body:setAwake(false)
+			gamemsg = ""
 			gamestate = "paused"
 		end
 	end
+end
+
+function getFieldPosition(obj)	--Check in which field the Ball is in this Moment
+	if obj.body:getX() < (startX + fieldWidth/2) then
+		return 1
+	else
+		return 2
+	end
+end
+
+function resetPositions()
+	--Resetting Ball Position
+	objects.ball.body:setPosition(fieldWidth/2 + startX, fieldHeight/2 + startY)
+	objects.ball.body:setAwake(false)
+	objects.ball.body:setAwake(true)
+	
+	--Resetting Player Positions
+	p1y = windowHeight/2
+	p2y = windowHeight/2
+end
+
+function getPlayerTurn()
+	return playerTurn
 end
 
 --Collision Callbacks
@@ -189,7 +245,40 @@ end
 --b is the second fixture object in the collision.
 --coll is the contact object created.  
 function beginContact(a, b, coll)
-	
+	x,y = coll:getNormal()	--Get Coordinates of the Collision Point
+	if a:getUserData() == "Ball" or b:getUserData() == "Ball" then	--Ball collides somewhere
+		if a:getUserData() == "LeftWall" or b:getUserData() == "LeftWall" then	--Ball collides with the left wall
+			gameOver(2)
+		elseif a:getUserData() == "RightWall" or b:getUserData() == "RightWall" then	--Ball collides with the right wall
+			gameOver(1)
+		end
+		
+		if a:getUserData() == "TopWall" or b:getUserData() == "TopWall" then	--Ball collides with the top wall
+			if playerTurn == 1 then
+				p1tmpColl = p1tmpColl + 1
+			elseif playerTurn == 2 then
+				p2tmpColl = p2tmpColl + 1
+			end
+			checkCollisions()
+		elseif a:getUserData() == "BottomWall" or b:getUserData() == "BottomWall" then	--Ball collides with the bottom wall
+			if playerTurn == 1 then
+				p1tmpColl = p1tmpColl + 1
+			elseif playerTurn == 2 then
+				p2tmpColl = p2tmpColl + 1
+			end
+			checkCollisions()
+		end
+		
+		if a:getUserData() == "Player1" or b:getUserData() == "Player1" then	--Ball collides with Player 1
+			playerTurn = 1
+			p1tmpColl = 0
+			p2tmpColl = 0
+		elseif a:getUserData() == "Player2" or b:getUserData() == "Player2" then	--Ball collides with Player 2
+			playerTurn = 2
+			p1tmpColl = 0
+			p2tmpColl = 0
+		end
+	end
 end
 
 function endContact(a, b, coll)
@@ -202,4 +291,24 @@ end
 
 function postSolve(a, b, coll)
 	
+end
+
+function checkCollisions()
+	if p1tmpColl >= maxColl then
+		gameOver(2)
+	elseif p2tmpColl >= maxColl then
+		gameOver(1)
+	end
+end
+
+function gameOver(winner)
+	if winner == 1 then
+		gamemsg = "Player 2 lost the match.\nCongratulations Player 1!"
+		objects.ball.body:setAwake(false)
+		p1score = p1score + 1
+	elseif winner == 2 then
+		gamemsg = "Player 1 lost the match.\nCongratulations Player 2!"
+		objects.ball.body:setAwake(false)
+		p2score = p2score + 1
+	end
 end
