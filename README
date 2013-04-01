@@ -1,1 +1,16 @@
-A reloaded Version of Pong with slightly nicer graphics.
+A simple Pong written in LÖVE Lua. 
+
+The final Version (1.0.0 and above) will be having the following features:
+
+- Main Menu with customizable Options like:
+	- Modified Ball Color
+	- Modified Avatars
+	- Modified Speed for the Characters
+	- Modified Speed for the Ball
+	- Modified Background Music
+	- Volume
+	- Changable Rules
+	- Changable Window Size
+	- Debugging Mode
+- A fully working version of Pong
+- Real Physics thanks to the LÖVE engine
