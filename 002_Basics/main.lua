@@ -2,7 +2,7 @@ function love.load()
 	--Setting up Game Window
 	windowWidth = 1024
 	windowHeight = 480
-	speed = 1		--2 = slow, 3 = normal, 4 = fast
+	speed = 1		--1 = very slow, 2 = slow, 3 = normal, 4 = fast, 5 = hell
 	maxColl = 5
 	vol = 1.0
 	debugging = true
@@ -132,7 +132,9 @@ function love.draw()
 		elseif playerTurn == 2 then
 			love.graphics.print("Player 2 has "..p2tmpColl.." temporary Collissions. Only "..(maxColl - p2tmpColl).." left.", 10, startY+fieldHeight+25)
 		end
-		love.graphics.print("Current Velocity: "..objects.ball.body:getLinearVelocity( ), startX+fieldWidth - 175, startY+fieldHeight+25)
+		x, y = objects.ball.body:getLinearVelocity()
+		love.graphics.print("Current Velocity in X-Axis: "..x, startX+fieldWidth - 175, startY+fieldHeight+25)
+		love.graphics.print("Current Velocity in Y-Axis: "..y, startX+fieldWidth - 175, startY+fieldHeight+40)
 	end
 	
 	love.graphics.setColor(255, 255, 255, 255)
@@ -175,11 +177,11 @@ function love.update(dt)
 	if bgSound:isStopped() then
 		bgSound:rewind()
 	end
-	--x, y = objects.ball.body:getLinearVelocity( )
-	--if abs(objects.ball.body:getLinearVelocity( )) < 520 then
-		--objects.ball.body:applyForce(x, y)
-	--elseif abs(objects.ball.body:getLinearVelocity( )) > 520 then
-		--objects.ball.body:applyForce(-100, -100)
+	x, y = objects.ball.body:getLinearVelocity( )
+	--if math.abs(x) < 520 then
+		--objects.ball.body:applyForce(-10, 0)
+	--elseif math.abs(x) > 520 then
+		--objects.ball.body:applyForce(10, 0)
 	--end
 	
 	--Player 1 Commands
@@ -226,15 +228,18 @@ function love.keypressed(key)
 			objects.ball.body:applyForce(-10000, 0)
 			playerTurn = 1
 		end
+		love.audio.resume(bgSound)
 	elseif key == 'p' then
 		--Gamestate = Paused
 		if gamestate == "paused" then
 			objects.ball.body:setAwake(true)
 			gamestate = "running"
+			love.audio.resume(bgSound)
 		else
 			objects.ball.body:setAwake(false)
 			gamemsg = ""
 			gamestate = "paused"
+			love.audio.pause(bgSound)
 		end
 	end
 end
