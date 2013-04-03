@@ -3,11 +3,11 @@ function love.load()
 	windowWidth = 1024
 	windowHeight = 480
 	pSpeed = 1	--1 = very slow, 2 = slow, 3 = normal, 4 = fast, 5 = hell
-	bSpeed = 200	--Ball Speed
+	bSpeed = 250	--Ball Speed
 	maxColl = 5	--Maximum Collisions
 	vol = 1.0	--Background Music Volume
-	debugging = true	--Debugging Information
-	vector = true	--Vector Drawing
+	debugging = false	--Debugging Information
+	vector = false	--Vector Drawing
 	success = love.graphics.setMode(windowWidth, windowHeight, false, false, 4)	--( width, height, fullscreen, vsync, fsaa )
    
 	--Setting Game Variables
@@ -177,7 +177,6 @@ function love.draw()
 	end
 	
 	--Check if Game Over
-	--See http://www.love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks for Collision resolving
 	if not(gamemsg == "") then
 		love.graphics.setColor(168, 168, 168, 150)
 		love.graphics.rectangle("fill", windowWidth/2-200, windowHeight/2-100, 400, 200)
@@ -288,8 +287,8 @@ function resetPositions()
 	objects.ball.body:setAwake(true)
 	
 	--Resetting Player Positions
-	p1y = windowHeight/2
-	p2y = windowHeight/2
+	objects.p1.body:setY(windowHeight/2)
+	objects.p2.body:setY(windowHeight/2)
 end
 
 function getPlayerTurn()
