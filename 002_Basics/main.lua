@@ -2,10 +2,12 @@ function love.load()
 	--Setting up Game Window
 	windowWidth = 1024
 	windowHeight = 480
-	speed = 1		--1 = very slow, 2 = slow, 3 = normal, 4 = fast, 5 = hell
-	maxColl = 5
-	vol = 1.0
-	debugging = true
+	pSpeed = 1	--1 = very slow, 2 = slow, 3 = normal, 4 = fast, 5 = hell
+	bSpeed = 200	--Ball Speed
+	maxColl = 5	--Maximum Collisions
+	vol = 1.0	--Background Music Volume
+	debugging = true	--Debugging Information
+	vector = true	--Vector Drawing
 	success = love.graphics.setMode(windowWidth, windowHeight, false, false, 4)	--( width, height, fullscreen, vsync, fsaa )
    
 	--Setting Game Variables
@@ -62,7 +64,7 @@ function love.load()
 	--Creating the Ball
 	objects.ball = {}
 		objects.ball.body = love.physics.newBody(world, windowWidth/2, windowHeight/2, "dynamic")	--Creates a Physical Body in the World. The Type is Dynamic, meaning it can be moved by other Objects.
-		--objects.ball.body:setMass(0)
+		objects.ball.body:setMass(0.0)
 		objects.ball.shape = love.physics.newCircleShape(15)	--The Shape of this Object is a Ball with the Radius of 10px.
 		objects.ball.fixture = love.physics.newFixture(objects.ball.body, objects.ball.shape, 1) --Attach fixture to body and give it a density of 1. A higher density gives it more mass.
 		objects.ball.fixture:setRestitution(1)	--Determines the Bouciness of the Ball.
@@ -97,6 +99,7 @@ function love.load()
 	love.graphics.setFont(stdF)
 	--Title font
 	ttlF = love.graphics.newFont("tcb.ttf", 28)
+	ttlFOut = love.graphics.newFont("tcb.ttf", 29)
 	love.graphics.setBackgroundColor(255,255,255)
 	love.graphics.setColor(0,0,0)
 	love.graphics.setColorMode("replace")
@@ -123,8 +126,8 @@ function love.draw()
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.setFont(stdF)
 	love.graphics.print("Player 1 uses W and S Keys and Player 2 uses Up and Down Arrow Keys. Start with Space.\nYou can Pause the Game with the P Key. For further Information press F1.", 10, 10)
-	love.graphics.print(p1score.." : "..p2score, startX+fieldWidth - 75, startY+fieldHeight+10)
 	if debugging then	--Debugging Infos
+		love.graphics.print(p1score.." : "..p2score, startX+fieldWidth - 75, startY+fieldHeight+5)
 		love.graphics.print("The Ball is in Player "..getFieldPosition(objects.ball).."'s Field", 10, 50)
 		love.graphics.print("It's Player "..getPlayerTurn().."'s Turn.", 10, startY+fieldHeight+10)
 		if playerTurn == 1 then
@@ -133,42 +136,60 @@ function love.draw()
 			love.graphics.print("Player 2 has "..p2tmpColl.." temporary Collissions. Only "..(maxColl - p2tmpColl).." left.", 10, startY+fieldHeight+25)
 		end
 		x, y = objects.ball.body:getLinearVelocity()
-		love.graphics.print("Current Velocity in X-Axis: "..x, startX+fieldWidth - 175, startY+fieldHeight+25)
-		love.graphics.print("Current Velocity in Y-Axis: "..y, startX+fieldWidth - 175, startY+fieldHeight+40)
+		love.graphics.print("Current Velocity in X-Axis: "..x, startX+fieldWidth - 175, startY+fieldHeight+15)
+		love.graphics.print("Current Velocity in Y-Axis: "..y, startX+fieldWidth - 175, startY+fieldHeight+30)
+		love.graphics.print("Current Vector Velocity: "..math.abs(x + y), startX+fieldWidth - 450, startY+fieldHeight+15)
+	else
+		love.graphics.print(p1score.." : "..p2score, startX+fieldWidth - 75, startY+fieldHeight+10)
 	end
 	
 	love.graphics.setColor(255, 255, 255, 255)
 	love.graphics.setFont(ttlF)
 	love.graphics.printf("P1", windowWidth/4-100, windowHeight/2 - 12, 200, "center")
 	love.graphics.printf("P2", 3 * (windowWidth/4) - 100, windowHeight/2 - 12, 200, "center")
+	love.graphics.setFont(stdF)
 	
 	--Draw the Ball
 	love.graphics.setColor(0, 0, 0)	--Set the 2 px Outline Color to Black for the Ball
 	love.graphics.circle("fill", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius() + 2)
 	love.graphics.setColor(255, 255, 255)	--Set the Drawing Color to White for the Ball
 	love.graphics.circle("fill", objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.shape:getRadius())
+	--Draw the Ball Vector
+	if vector then
+		x, y = objects.ball.body:getLinearVelocity()
+		love.graphics.setColor(255, 0, 0)
+		love.graphics.line(objects.ball.body:getX(), objects.ball.body:getY(), objects.ball.body:getX() + x, objects.ball.body:getY() + y)
+		love.graphics.circle("fill", objects.ball.body:getX() + x, objects.ball.body:getY() + y, 2)
+	end
 	
 	--Set the Players up
 	love.graphics.setColorMode("replace")
 	love.graphics.draw(objects.p1.image, objects.p1.body:getX(), objects.p1.body:getY(), objects.p1.body:getAngle(),  1, 1, objects.p1.image:getWidth()/2, objects.p1.image:getHeight()/2)
 	love.graphics.draw(objects.p2.image, objects.p2.body:getX(), objects.p2.body:getY(), objects.p2.body:getAngle(),  1, 1, objects.p2.image:getWidth()/2, objects.p2.image:getHeight()/2)
+	love.graphics.setColorMode("modulate")
 	
 	if gamestate == "paused" then	--If the Game was Paused display the Message
 		--Actual Text
 		love.graphics.setColor(0, 0, 0, 255)
 		love.graphics.setFont(ttlF)
 		love.graphics.printf("PAUSED", windowWidth/2 - 100, windowHeight/2 - 12, 200, "center")
+		love.graphics.setFont(stdF)
 	end
 	
 	--Check if Game Over
 	--See http://www.love2d.org/wiki/Tutorial:PhysicsCollisionCallbacks for Collision resolving
 	if not(gamemsg == "") then
-		love.graphics.setColor(168, 168, 168,128)
+		love.graphics.setColor(168, 168, 168, 150)
 		love.graphics.rectangle("fill", windowWidth/2-200, windowHeight/2-100, 400, 200)
-		love.graphics.setColor(200, 200, 200, 200)
+		love.graphics.setColor(200, 200, 200, 220)
 		love.graphics.rectangle("line", windowWidth/2-200, windowHeight/2-100, 400, 200)
-		love.graphics.setColor(255, 255, 255, 255)
+		love.graphics.setFont(ttlFOut)
+		love.graphics.setColor(168, 168, 168)
 		love.graphics.printf(gamemsg, windowWidth/2-200, windowHeight/2-35, 400, "center")
+		love.graphics.setFont(ttlF)
+		love.graphics.setColor(255, 255, 255)
+		love.graphics.printf(gamemsg, windowWidth/2-200, windowHeight/2-35, 400, "center")
+		love.graphics.setFont(stdF)
 	end
 end
 
@@ -177,47 +198,55 @@ function love.update(dt)
 	if bgSound:isStopped() then
 		bgSound:rewind()
 	end
-	x, y = objects.ball.body:getLinearVelocity( )
-	--if math.abs(x) < 520 then
-		--objects.ball.body:applyForce(-10, 0)
-	--elseif math.abs(x) > 520 then
-		--objects.ball.body:applyForce(10, 0)
-	--end
+	if gamestate == "running" then
+		x, y = objects.ball.body:getLinearVelocity( )
+		if math.abs(x + y) < bSpeed then
+			if x < 0 then
+				objects.ball.body:applyForce(-25, 0)
+			elseif x > 0 then
+				objects.ball.body:applyForce(25, 0)
+			else
+				if playerTurn == 1 then
+					objects.ball.body:applyForce(25, 0)
+				else
+					objects.ball.body:applyForce(-25, 0)
+				end
+			end
+		elseif math.abs(x + y) > bSpeed then
+			if x < 0 then
+				objects.ball.body:applyForce(25, 0)
+			elseif x > 0 then
+				objects.ball.body:applyForce(-25, 0)
+			else
+				if playerTurn == 1 then
+					objects.ball.body:applyForce(-25, 0)
+				else
+					objects.ball.body:applyForce(25, 0)
+				end
+			end
+		end
+	end
 	
 	--Player 1 Commands
-	if love.keyboard.isDown("w") and ((objects.p1.body:getY() - speed) >= startY) then	--Player 1 goes up
-		--objects.p1.body:applyForce(0, -600)				--For Players who want real Physics
-		objects.p1.body:setY(objects.p1.body:getY() - speed)
-	elseif love.keyboard.isDown("s") and ((objects.p1.body:getY() + speed) <= (startY + fieldHeight)) then	--Player 1 goes down
-		--objects.p1.body:applyForce(0, 600)				--For Players who want real Physics
-		objects.p1.body:setY(objects.p1.body:getY() + speed)
+	if gamestate == "running" then
+		if love.keyboard.isDown("w") and ((objects.p1.body:getY() - pSpeed) >= startY) then	--Player 1 goes up
+			objects.p1.body:setY(objects.p1.body:getY() - pSpeed)
+		elseif love.keyboard.isDown("s") and ((objects.p1.body:getY() + pSpeed) <= (startY + fieldHeight)) then	--Player 1 goes down
+			objects.p1.body:setY(objects.p1.body:getY() + pSpeed)
+		end
+		
+		--Player 2 Commands
+		if love.keyboard.isDown("up") and ((objects.p2.body:getY() - pSpeed) >= startY) then	--Player 2 goes up
+			objects.p2.body:setY(objects.p2.body:getY() - pSpeed)
+		elseif love.keyboard.isDown("down") and ((objects.p2.body:getY() + pSpeed) <= (startY + fieldHeight)) then	--Player 2 goes down
+			objects.p2.body:setY(objects.p2.body:getY() + pSpeed)
+		end
 	end
-	
-	--Player 2 Commands
-	if love.keyboard.isDown("up") and ((objects.p2.body:getY() - speed) >= startY) then	--Player 2 goes up
-		--objects.p2.body:applyForce(0, -600)				--For Players who want real Physics
-		objects.p2.body:setY(objects.p2.body:getY() - speed)
-	elseif love.keyboard.isDown("down") and ((objects.p2.body:getY() + speed) <= (startY + fieldHeight)) then	--Player 2 goes down
-		--objects.p2.body:applyForce(0, 600)				--For Players who want real Physics
-		objects.p2.body:setY(objects.p2.body:getY() + speed)
-	end
-	
-	--You could call Body:getLinearVelocity() and only apply force if the horizontal velocity is smaller than a certain number.
-	--x, y = Body:getLinearVelocity( )
-	--vx, vy = Body:getLinearVelocityFromLocalPoint( x, y )
-	--number x
-		--The x position to measure velocity.
-	--number y
-		--The y position to measure velocity.
-	--number vx
-		--The x component of velocity at point (x,y). 
-	--number vy
-		--The y component of velocity at point (x,y). 
 end
 
 function love.keypressed(key)
 	if key == ' ' then
-		--Gamestate = Started
+		--Game is running
 		gamestate = "running"
 		gamemsg = ""
 		resetPositions()
@@ -230,7 +259,7 @@ function love.keypressed(key)
 		end
 		love.audio.resume(bgSound)
 	elseif key == 'p' then
-		--Gamestate = Paused
+		--Game is paused
 		if gamestate == "paused" then
 			objects.ball.body:setAwake(true)
 			gamestate = "running"
@@ -329,6 +358,7 @@ function checkCollisions()
 end
 
 function gameOver(winner)
+	gamestate = "paused"
 	if winner == 1 then
 		gamemsg = "Player 2 lost the match.\nCongratulations Player 1!"
 		objects.ball.body:setAwake(false)
